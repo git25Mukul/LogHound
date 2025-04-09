@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogHound v8.0.0 - Advanced Log Search Utility</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a0ca3;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --danger: #f72585;
+            --info: #4895ef;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: -50px;
+            left: -50px;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        
+        header::after {
+            content: "";
+            position: absolute;
+            bottom: -80px;
+            right: -80px;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 2.8rem;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .version {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            position: relative;
+            z-index: 1;
+        }
+        
+        h2 {
+            color: var(--primary);
+            font-weight: 600;
+            margin-top: 3rem;
+            position: relative;
+            padding-bottom: 0.75rem;
+        }
+        
+        h2::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            border-radius: 2px;
+        }
+        
+        h3 {
+            color: var(--secondary);
+            font-weight: 500;
+            margin-top: 2rem;
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: white;
+            padding: 15px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-radius: 50px;
+            margin: -2rem auto 3rem;
+            max-width: 90%;
+        }
+        
+        .nav-btn {
+            background-color: white;
+            color: var(--primary);
+            border: 2px solid var(--light-gray);
+            padding: 0.8rem 1.8rem;
+            margin: 0.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .nav-btn i {
+            margin-right: 8px;
+            font-size: 1rem;
+        }
+        
+        .nav-btn:hover, .nav-btn.active {
+            background-color: var(--primary);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+            border-color: var(--primary);
+        }
+        
+        .section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            scroll-margin-top: 120px;
+        }
+        
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+        
+        .code-block {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            border-radius: 0 8px 8px 0;
+            position: relative;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 0.8rem;
+            right: 0.8rem;
+            background-color: var(--light);
+            border: 1px solid var(--light-gray);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .copy-btn i {
+            margin-right: 5px;
+        }
+        
+        .copy-btn:hover {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .example {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--info);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+            position: relative;
+        }
+        
+        .example-title {
+            color: var(--info);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .example-title i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .option {
+            font-weight: 600;
+            color: var(--primary);
+            font-family: 'Fira Code', 'Courier New', monospace;
+        }
+        
+        .option-desc {
+            margin-left: 1rem;
+            margin-bottom: 1rem;
+            color: var(--gray);
+        }
+        
+        .option-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .option-table th {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 500;
+        }
+        
+        .option-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .option-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .option-table tr:hover {
+            background-color: #f1f3f5;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.7rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .badge i {
+            margin-right: 5px;
+            font-size: 0.7rem;
+        }
+        
+        .badge-primary {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+        
+        .badge-success {
+            background-color: rgba(76, 201, 240, 0.1);
+            color: var(--success);
+        }
+        
+        .badge-warning {
+            background-color: rgba(248, 150, 30, 0.1);
+            color: var(--warning);
+        }
+        
+        .badge-danger {
+            background-color: rgba(247, 37, 133, 0.1);
+            color: var(--danger);
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.4); }
+            70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(67, 97, 238, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(67, 97, 238, 0); }
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding: 2rem 0;
+            color: var(--gray);
+            font-size: 0.9rem;
+            background-color: white;
+            border-top: 1px solid var(--light-gray);
+        }
+        
+        .highlight {
+            background-color: rgba(67, 97, 238, 0.1);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+            color: var(--primary);
+            font-family: 'Fira Code', 'Courier New', monospace;
+        }
+        
+        .note {
+            background-color: rgba(72, 149, 239, 0.1);
+            border-left: 4px solid var(--info);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .note-title {
+            color: var(--info);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .note-title i {
+            margin-right: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .tab {
+            padding: 0.8rem 1.5rem;
+            background-color: transparent;
+            cursor: pointer;
+            border: none;
+            border-bottom: 3px solid transparent;
+            margin-right: 0.5rem;
+            transition: all 0.3s;
+            font-weight: 500;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+        }
+        
+        .tab i {
+            margin-right: 8px;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .feature-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border-top: 3px solid var(--primary);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--dark);
+        }
+        
+        .feature-desc {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+        
+        .command-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+        
+        .search-string-example {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .search-string-example .comment {
+            color: var(--gray);
+            font-style: italic;
+        }
+        
+        .search-string-example .string {
+            color: var(--danger);
+        }
+        
+        .search-string-example .pattern {
+            color: var(--primary);
+        }
+        
+        .search-string-example .regex {
+            color: var(--success);
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-container {
+                border-radius: 0;
+                max-width: 100%;
+                margin: 0 0 2rem 0;
+                padding: 10px;
+            }
+            
+            .nav-btn {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+            
+            .section {
+                padding: 1.5rem;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-search-plus"></i>
+            </div>
+            <h1>LogHound</h1>
+            <div class="version">Advanced Log Search Utility v8.0.0</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="nav-container">
+            <button class="nav-btn active" onclick="scrollToSection('overview')">
+                <i class="fas fa-home"></i> Overview
+            </button>
+            <button class="nav-btn" onclick="scrollToSection('installation')">
+                <i class="fas fa-download"></i> Installation
+            </button>
+            <button class="nav-btn" onclick="scrollToSection('options')">
+                <i class="fas fa-cog"></i> Options
+            </button>
+            <button class="nav-btn" onclick="scrollToSection('examples')">
+                <i class="fas fa-code"></i> Examples
+            </button>
+            <button class="nav-btn" onclick="scrollToSection('tips')">
+                <i class="fas fa-lightbulb"></i> Tips
+            </button>
+            <button class="nav-btn" onclick="scrollToSection('cheatsheet')">
+                <i class="fas fa-clipboard-list"></i> Cheatsheet
+            </button>
+        </div>
+
+        <section id="overview" class="section">
+            <h2><i class="fas fa-home"></i> Overview</h2>
+            <p>LogHound is a powerful command-line utility designed to search through log files efficiently with advanced features and intuitive usage.</p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-archive"></i>
+                    </div>
+                    <h3 class="feature-title">Compressed File Support</h3>
+                    <p class="feature-desc">Search directly in .gz, .tar.gz, and .tgz files without manual extraction.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-filter"></i>
+                    </div>
+                    <h3 class="feature-title">Smart Filtering</h3>
+                    <p class="feature-desc">Filter by modification time or date patterns in filenames.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-palette"></i>
+                    </div>
+                    <h3 class="feature-title">Colorized Output</h3>
+                    <p class="feature-desc">Easily identify matches and errors with color-coded results.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Performance Optimized</h3>
+                    <p class="feature-desc">Built-in timeout and file limits prevent system overload.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Comprehensive Logging</h3>
+                    <p class="feature-desc">All search results are automatically logged with timestamps.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-magic"></i>
+                    </div>
+                    <h3 class="feature-title">Easy Installation</h3>
+                    <p class="feature-desc">Simple system-wide installation with automatic symlink creation.</p>
+                </div>
+            </div>
+            
+            <div class="note pulse">
+                <div class="note-title">
+                    <i class="fas fa-star"></i> Why Choose LogHound?
+                </div>
+                <p>LogHound combines the power of grep with specialized features for log analysis, offering an intuitive interface that saves time and effort when troubleshooting systems or analyzing application logs.</p>
+            </div>
+        </section>
+
+        <section id="installation" class="section">
+            <h2><i class="fas fa-download"></i> Installation</h2>
+            
+            <h3>System Requirements</h3>
+            <ul>
+                <li>Linux/Unix-based system (tested on Ubuntu, CentOS, Debian)</li>
+                <li>Bash shell (version 4.0 or higher)</li>
+                <li>Standard GNU utilities (grep, find, sed, tar, gzip)</li>
+                <li>Root access for installation (to create symlinks)</li>
+            </ul>
+            
+            <h3>Installation Steps</h3>
+            <div class="tabs">
+                <button class="tab active" onclick="openTab(event, 'install-basic')">
+                    <i class="fas fa-laptop-code"></i> Basic Install
+                </button>
+                <button class="tab" onclick="openTab(event, 'install-uninstall')">
+                    <i class="fas fa-trash-alt"></i> Uninstall
+                </button>
+                <button class="tab" onclick="openTab(event, 'install-upgrade')">
+                    <i class="fas fa-sync-alt"></i> Upgrade
+                </button>
+            </div>
+            
+            <div id="install-basic" class="tab-content active">
+                <p>To install LogHound system-wide with default configuration:</p>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                    sudo ./loghound.sh --install
+                </div>
+                <p>This command will:</p>
+                <ol>
+                    <li>Create three search string files in the current directory:
+                        <ul>
+                            <li><span class="highlight">search_string</span> - General search patterns</li>
+                            <li><span class="highlight">ims_string</span> - IMS-specific patterns</li>
+                            <li><span class="highlight">startUp_string</span> - Startup-related patterns</li>
+                        </ul>
+                    </li>
+                    <li>Create a symlink in <span class="highlight">/usr/local/bin/LogHound</span></li>
+                    <li>Create symlinks to search string files in <span class="highlight">/root/</span></li>
+                </ol>
+                
+                <div class="note">
+                    <div class="note-title">
+                        <i class="fas fa-exclamation-circle"></i> Note
+                    </div>
+                    <p>If the script isn't executable, run <span class="highlight">chmod +x loghound.sh</span> first.</p>
+                </div>
+            </div>
+            
+            <div id="install-uninstall" class="tab-content">
+                <p>To completely remove LogHound from your system:</p>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                    sudo LogHound --uninstall
+                </div>
+                <p>This command will:</p>
+                <ol>
+                    <li>Remove the <span class="highlight">/usr/local/bin/LogHound</span> symlink</li>
+                    <li>Remove search string file symlinks from <span class="highlight">/root/</span></li>
+                    <li>Remove the <span class="highlight">./log_find</span> directory</li>
+                </ol>
+                
+                <div class="note">
+                    <div class="note-title">
+                        <i class="fas fa-info-circle"></i> Important
+                    </div>
+                    <p>This will not remove your original search string files or the script itself, only the system-wide symlinks and log directories.</p>
+                </div>
+            </div>
+            
+            <div id="install-upgrade" class="tab-content">
+                <p>To upgrade to a newer version of LogHound:</p>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                    # First uninstall the old version
+                    sudo LogHound --uninstall
+                    
+                    # Then install the new version
+                    sudo ./loghound.sh --install
+                </div>
+                <p>Your search string files will be preserved during this process.</p>
+                
+                <div class="note">
+                    <div class="note-title">
+                        <i class="fas fa-lightbulb"></i> Pro Tip
+                    </div>
+                    <p>Consider backing up your search string files before upgrading:</p>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        cp search_string search_string.backup
+                        cp ims_string ims_string.backup
+                        cp startUp_string startUp_string.backup
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Post-Installation</h3>
+            <p>After installation, you can run LogHound from any directory by typing:</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                LogHound [options]
+            </div>
+            
+            <div class="note">
+                <div class="note-title">
+                    <i class="fas fa-check-circle"></i> Verification
+                </div>
+                <p>Verify your installation by running:</p>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                    LogHound -h
+                </div>
+                <p>This should display the help message with all available options.</p>
+            </div>
+        </section>
+
+        <section id="options" class="section">
+            <h2><i class="fas fa-cog"></i> Command Options</h2>
+            <p>LogHound provides numerous options to customize your search behavior:</p>
+            
+            <div class="command-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #4361ee;"></div>
+                    <span>Basic options</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f8961e;"></div>
+                    <span>Filtering options</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f72585;"></div>
+                    <span>Output options</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #4cc9f0;"></div>
+                    <span>Admin options</span>
+                </div>
+            </div>
+            
+            <table class="option-table">
+                <thead>
+                    <tr>
+                        <th>Option</th>
+                        <th>Description</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="option">-s, --search-file</span></td>
+                        <td>Specify custom file containing search strings (default: search_string)</td>
+                        <td><code>-s ~/custom_strings.txt</code></td>
+                    </tr>
+                    <tr>
+                        <td><span class="option">-f, --file</span></td>
+                        <td>Search in a single specified file</td>
+                        <td><code>-f /var/log/nginx/error.log</code></td>
+                    </tr>
+                    <tr>
+                        <td><span class="option">-d, --directory</span></td>
+                        <td>Search all files in specified directory (recursive)</td>
+                        <td><code>-d /var/log/nginx/</code></td>
+                    </tr>
+                    <tr>
+                        <td><span class="option">-m, --multiple</span></td>
+                        <td>Search in multiple specified files</td>
+                        <td><code>-m app.log system.log</code></td>
+                    </tr>
+                    <tr style="background-color: rgba(248, 150, 30, 0.05);">
+                        <td><span class="option">-t, --time</span></td>
+                        <td>Only process files modified in last X minutes</td>
+                        <td><code>-t 1440</code> (last 24 hours)</td>
+                    </tr>
+                    <tr style="background-color: rgba(248, 150, 30, 0.05);">
+                        <td><span class="option">--date</span></td>
+                        <td>Process files with date pattern in names (yyyymmdd[hh[mm[ss]])</td>
+                        <td><code>--date 202305</code> (May 2023)</td>
+                    </tr>
+                    <tr style="background-color: rgba(247, 37, 133, 0.05);">
+                        <td><span class="option">-vvv, --verbose</span></td>
+                        <td>Print lines from target files in log file</td>
+                        <td><code>-vvv</code></td>
+                    </tr>
+                    <tr style="background-color: rgba(247, 37, 133, 0.05);">
+                        <td><span class="option">--print</span></td>
+                        <td>Log matching lines with line numbers</td>
+                        <td><code>--print</code></td>
+                    </tr>
+                    <tr style="background-color: rgba(76, 201, 240, 0.05);">
+                        <td><span class="option">--delete</span></td>
+                        <td>Delete all log_find directories/files</td>
+                        <td><code>--delete</code></td>
+                    </tr>
+                    <tr style="background-color: rgba(76, 201, 240, 0.05);">
+                        <td><span class="option">--install</span></td>
+                        <td>Install script and create required files</td>
+                        <td><code>--install</code></td>
+                    </tr>
+                    <tr style="background-color: rgba(76, 201, 240, 0.05);">
+                        <td><span class="option">--uninstall</span></td>
+                        <td>Remove all symlinks and log files</td>
+                        <td><code>--uninstall</code></td>
+                    </tr>
+                    <tr>
+                        <td><span class="option">-h, --help</span></td>
+                        <td>Show help message</td>
+                        <td><code>-h</code></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="note">
+                <div class="note-title">
+                    <i class="fas fa-lightbulb"></i> Option Combinations
+                </div>
+                <p>Most options can be combined for more powerful searches. For example:</p>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                    LogHound -d /var/log/ -t 120 --print -vvv
+                </div>
+                <p>This searches in /var/log/ for files modified in the last 2 hours, showing matching lines with numbers and verbose output.</p>
+            </div>
+        </section>
+
+        <section id="examples" class="section">
+            <h2><i class="fas fa-code"></i> Usage Examples</h2>
+            <p>Here are practical examples demonstrating LogHound's capabilities:</p>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="openTab(event, 'examples-basic')">
+                    <i class="fas fa-baby"></i> Basic
+                </button>
+                <button class="tab" onclick="openTab(event, 'examples-advanced')">
+                    <i class="fas fa-user-ninja"></i> Advanced
+                </button>
+                <button class="tab" onclick="openTab(event, 'examples-combined')">
+                    <i class="fas fa-rocket"></i> Combined
+                </button>
+                <button class="tab" onclick="openTab(event, 'examples-realworld')">
+                    <i class="fas fa-globe"></i> Real-World
+                </button>
+            </div>
+            
+            <div id="examples-basic" class="tab-content active">
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-file-alt"></i> Default search
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound
+                    </div>
+                    <p>Searches in /data/storage/log for IMS*.log files using patterns from search_string.</p>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-folder-open"></i> Directory search
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound -d /var/log/nginx/
+                    </div>
+                    <p>Searches all log files in the nginx directory (including compressed files).</p>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-file"></i> Single file search
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound -f /var/log/syslog
+                    </div>
+                    <p>Searches only in the system log file using default search patterns.</p>
+                </div>
+            </div>
+            
+            <div id="examples-advanced" class="tab-content">
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-search-plus"></i> Custom search strings
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound -s ~/error_patterns.txt -d /opt/app/logs/
+                    </div>
+                    <p>Uses custom patterns from error_patterns.txt to search in application logs.</p>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-clock"></i> Time-based search
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound -t 30
+                    </div>
+                    <p>Searches only in files modified in the last 30 minutes.</p>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-calendar-day"></i> Date pattern search
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound --date 20230615 -d /var/log/archive/
+                    </div>
+                    <p>Searches files with "20230615" in their names in the archive directory.</p>
+                </div>
+            </div>
+            
+            <div id="examples-combined" class="tab-content">
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-sliders-h"></i> Verbose search with line numbers
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound -vvv --print -d /var/log/
+                    </div>
+                    <p>Shows matching lines with numbers and includes file contents in output.</p>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-filter"></i> Filtered verbose search
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound -vvv -t 1440 --date 202306 -d /var/log/
+                    </div>
+                    <p>Verbose search in files modified in last 24 hours with "202306" in names.</p>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-cogs"></i> Complex search scenario
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound -s critical_errors.txt --print -t 120 -d /opt/app/{logs,debug}/
+                    </div>
+                    <p>Searches for critical errors in multiple directories, limited to recent files.</p>
+                </div>
+            </div>
+            
+            <div id="examples-realworld" class="tab-content">
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-server"></i> Troubleshooting server issues
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound -s server_errors.txt -t 30 -d /var/log/{nginx,mysql,apache2}/
+                    </div>
+                    <p>Quickly checks multiple service logs for recent errors.</p>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-bug"></i> Debugging application crashes
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound -f /opt/app/debug.log --print -s crash_patterns.txt
+                    </div>
+                    <p>Finds crash patterns in application debug log with line numbers.</p>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-archive"></i> Analyzing archived logs
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound --date 202301 -d /var/log/archive/ -s monthly_report.txt
+                    </div>
+                    <p>Generates a monthly report by searching January 2023 archived logs.</p>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">
+                        <i class="fas fa-shield-alt"></i> Security audit
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                        LogHound -vvv --print -s security_patterns.txt -d /var/log/{auth.log,secure}/
+                    </div>
+                    <p>Comprehensive security audit with verbose output and line numbers.</p>
+                </div>
+            </div>
+            
+            <div class="note">
+                <div class="note-title">
+                    <i class="fas fa-clipboard-check"></i> Example Output
+                </div>
+                <p>Here's what a typical successful search looks like:</p>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                    2023-06-15 14:30:45 [LogHound] INFO: Starting string search script
+                    2023-06-15 14:30:45 [LogHound] INFO: Found 3 matches for 'ERROR' in /var/log/nginx/error.log
+                    <span style="color: #27ae60;">O Found 'ERROR' 3 times in /var/log/nginx/error.log</span>
+                    2023-06-15 14:30:46 [LogHound] INFO: Found 0 matches for 'WARNING' in /var/log/nginx/error.log
+                    <span style="color: #f39c12;">X 'WARNING' not found in /var/log/nginx/error.log</span>
+                    2023-06-15 14:30:47 [LogHound] INFO: Search completed. Results saved to ./log_find/log_find_20230615_14-30-45.log
+                </div>
+            </div>
+        </section>
+
+        <section id="tips" class="section">
+            <h2><i class="fas fa-lightbulb"></i> Tips & Tricks</h2>
+            
+            <h3>Search String File Format</h3>
+            <p>The search string file supports various pattern types for flexible searching:</p>
+            
+            <div class="search-string-example">
+                <span class="comment"># Simple error matching</span><br>
+                ERROR<br>
+                <span class="comment"># Wildcard patterns</span><br>
+                *exception*<br>
+                timeout*<br>
+                <span class="comment"># Basic regex patterns</span><br>
+                failed.*login<br>
+                connection refused<br>
+                <span class="comment"># Case insensitive matching (automatically applied)</span><br>
+                critical<br>
+                <span class="comment"># Multiple variations</span><br>
+                segfault|segmentation fault<br>
+                <span class="comment"># Combined patterns</span><br>
+                error.*database<br>
+                (warning|error).*disk
+            </div>
+            
+            <h3>Performance Optimization</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-stopwatch"></i>
+                    </div>
+                    <h3 class="feature-title">Time Filtering</h3>
+                    <p class="feature-desc">Always use <span class="highlight">-t</span> with large directories to limit search scope.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-folder"></i>
+                    </div>
+                    <h3 class="feature-title">Targeted Directories</h3>
+                    <p class="feature-desc">Be specific with directory paths to avoid scanning unnecessary files.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-archive"></i>
+                    </div>
+                    <h3 class="feature-title">Compressed Files</h3>
+                    <p class="feature-desc">Searching in .gz files is slower - filter them with <span class="highlight">--date</span> when possible.</p>
+                </div>
+            </div>
+            
+            <h3>Output Interpretation</h3>
+            <div class="command-legend">
+                <div class="legend-item">
+                    <div style="color: #27ae60; font-size: 1.2rem;">O</div>
+                    <span>Match found</span>
+                </div>
+                <div class="legend-item">
+                    <div style="color: #f39c12; font-size: 1.2rem;">X</div>
+                    <span>No match found</span>
+                </div>
+                <div class="legend-item">
+                    <div style="color: #f72585; font-size: 1.2rem;">!</div>
+                    <span>Error occurred</span>
+                </div>
+            </div>
+            
+            <div class="note">
+                <div class="note-title">
+                    <i class="fas fa-history"></i> Log Rotation
+                </div>
+                <p>When dealing with log rotation, combine <span class="highlight">--date</span> with directory search:</p>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                    LogHound -d /var/log/ --date $(date +%Y%m%d)
+                </div>
+                <p>This searches logs from today only, automatically handling rotated logs with date suffixes.</p>
+            </div>
+            
+            <h3>Custom Configurations</h3>
+            <p>Create multiple search string files for different purposes:</p>
+            <ul>
+                <li><span class="highlight">security_string</span> - For security-related patterns</li>
+                <li><span class="highlight">performance_string</span> - For performance issues</li>
+                <li><span class="highlight">startup_string</span> - For initialization problems</li>
+            </ul>
+            
+            <p>Then use them as needed:</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                # Security audit
+                LogHound -s security_string -d /var/log/
+                
+                # Performance check
+                LogHound -s performance_string -t 60
+            </div>
+        </section>
+
+        <section id="cheatsheet" class="section">
+            <h2><i class="fas fa-clipboard-list"></i> Quick Reference Cheatsheet</h2>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3 class="feature-title">Common Commands</h3>
+                    <div class="code-block" style="padding: 1rem; margin: 0;">
+                        LogHound -d /var/log/<br>
+                        LogHound -f app.log<br>
+                        LogHound -t 30<br>
+                        LogHound --date 202306
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search-plus"></i>
+                    </div>
+                    <h3 class="feature-title">Verbose Modes</h3>
+                    <div class="code-block" style="padding: 1rem; margin: 0;">
+                        LogHound -vvv<br>
+                        LogHound --print<br>
+                        LogHound -vvv --print
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-filter"></i>
+                    </div>
+                    <h3 class="feature-title">Filter Combos</h3>
+                    <div class="code-block" style="padding: 1rem; margin: 0;">
+                        LogHound -t 60 --date 202306<br>
+                        LogHound -d /var/log/ -t 1440<br>
+                        LogHound --date $(date +%Y%m%d)
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Search String Examples</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3 class="feature-title">Error Patterns</h3>
+                    <div class="code-block" style="padding: 1rem; margin: 0;">
+                        ERROR<br>
+                        *exception*<br>
+                        fail*<br>
+                        crash
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Security Patterns</h3>
+                    <div class="code-block" style="padding: 1rem; margin: 0;">
+                        unauthorized<br>
+                        brute force<br>
+                        intrusion<br>
+                        suspicious
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Performance Patterns</h3>
+                    <div class="code-block" style="padding: 1rem; margin: 0;">
+                        timeout<br>
+                        slow<br>
+                        high cpu<br>
+                        memory leak
+                    </div>
+                </div>
+            </div>
+            
+            <div class="note pulse">
+                <div class="note-title">
+                    <i class="fas fa-book"></i> Documentation
+                </div>
+                <p>Remember you can always access the built-in help with:</p>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i> Copy</button>
+                    LogHound -h
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>LogHound v8.0.0 - Advanced Log Search Utility</p>
+            <p>Documentation generated on <span id="current-date"></span></p>
+            <div style="margin-top: 1rem;">
+                <a href="#" style="color: var(--primary); margin: 0 10px;"><i class="fas fa-arrow-up"></i> Back to Top</a>
+                <a href="#" style="color: var(--primary); margin: 0 10px;"><i class="fas fa-book"></i> Full Documentation</a>
+                <a href="#" style="color: var(--primary); margin: 0 10px;"><i class="fas fa-download"></i> Download</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Set current date in footer
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Scroll to section function with smooth behavior and offset
+        function scrollToSection(sectionId) {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                const headerOffset = 120;
+                const elementPosition = element.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+                
+                // Update active nav button
+                const navButtons = document.querySelectorAll('.nav-btn');
+                navButtons.forEach(button => {
+                    button.classList.remove('active');
+                    const buttonText = button.textContent.trim().toLowerCase().replace(/[^a-z]/g, '');
+                    if (buttonText.includes(sectionId.toLowerCase())) {
+                        button.classList.add('active');
+                    }
+                });
+            }
+        }
+        
+        // Tab functionality
+        function openTab(evt, tabName) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+        
+        // Copy to clipboard function with improved feedback
+        function copyToClipboard(button) {
+            const codeBlock = button.parentElement;
+            const textToCopy = codeBlock.textContent.replace('Copy', '').trim();
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                // Change button text temporarily
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                button.style.backgroundColor = '#27ae60';
+                button.style.color = 'white';
+                button.style.borderColor = '#27ae60';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.backgroundColor = '';
+                    button.style.color = '';
+                    button.style.borderColor = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                button.innerHTML = '<i class="fas fa-times"></i> Error';
+                button.style.backgroundColor = '#f72585';
+                button.style.color = 'white';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.backgroundColor = '';
+                    button.style.color = '';
+                }, 2000);
+            });
+        }
+        
+        // Highlight current section in navigation
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('.section');
+            const navButtons = document.querySelectorAll('.nav-btn');
+            const scrollPosition = window.pageYOffset;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 150;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                    navButtons.forEach(button => {
+                        button.classList.remove('active');
+                        const buttonText = button.textContent.trim().toLowerCase().replace(/[^a-z]/g, '');
+                        if (buttonText.includes(sectionId.toLowerCase())) {
+                            button.classList.add('active');
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Initialize first nav button as active
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstNavBtn = document.querySelector('.nav-btn');
+            if (firstNavBtn) {
+                firstNavBtn.classList.add('active');
+            }
+            
+            // Add animation to all sections
+            const sections = document.querySelectorAll('.section');
+            const navButtons = document.querySelectorAll('.nav-btn');
+            
+            let currentSection = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                if (window.pageYOffset >= (sectionTop - 150) && 
+                    window.pageYOffset <= (sectionTop + sectionHeight - 150)) {
+                    currentSection = section.id;
+                }
+            });
+            
+            navButtons.forEach(button => {
+                button.classList.remove('active');
+                if (button.textContent.trim().toLowerCase() === currentSection.toLowerCase() || 
+                    button.textContent.trim().toLowerCase().includes(currentSection.toLowerCase())) {
+                    button.classList.add('active');
+                }
+            });
+        });
+        
+        // Initialize first nav button as active
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstNavBtn = document.querySelector('.nav-btn');
+            if (firstNavBtn) {
+                firstNavBtn.classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>
